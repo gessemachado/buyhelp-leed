@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">BuyHelp Leads</string>
+    <string name="title_activity_main">BuyHelp Leads</string>
+    <string name="package_name">com.buyhelp.leads</string>
+    <string name="custom_url_scheme">com.buyhelp.leads</string>
+</resources>

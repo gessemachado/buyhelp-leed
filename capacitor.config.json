@@ -1,0 +1,16 @@
+{
+  "appId": "com.buyhelp.leads",
+  "appName": "BuyHelp Leads",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "http"
+  },
+  "plugins": {
+    "CapacitorSQLite": {
+      "iosDatabaseLocation": "Library/CapacitorDatabase"
+    },
+    "Camera": {
+      "presentationStyle": "fullscreen"
+    }
+  }
+}

@@ -1,0 +1,103 @@
+/* Fontes bundled — funcionam 100% offline */
+@import '@fontsource/plus-jakarta-sans/400.css';
+@import '@fontsource/plus-jakarta-sans/500.css';
+@import '@fontsource/plus-jakarta-sans/600.css';
+@import '@fontsource/plus-jakarta-sans/700.css';
+@import '@fontsource/plus-jakarta-sans/800.css';
+@import '@fontsource/be-vietnam-pro/400.css';
+@import '@fontsource/be-vietnam-pro/500.css';
+@import '@fontsource/be-vietnam-pro/600.css';
+@import '@fontsource/be-vietnam-pro/700.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+    box-sizing: border-box;
+  }
+
+  html, body, #root {
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  body {
+    font-family: 'Be Vietnam Pro', sans-serif;
+    background-color: #f9f9ff;
+    color: #151c27;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Safe area para iOS notch e home indicator */
+  .safe-top    { padding-top: env(safe-area-inset-top); }
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+  .safe-left   { padding-left: env(safe-area-inset-left); }
+  .safe-right  { padding-right: env(safe-area-inset-right); }
+
+  /* Touch targets mínimos */
+  button, input, select, textarea, a {
+    min-height: 44px;
+  }
+
+  /* Scroll suave */
+  * { scroll-behavior: smooth; }
+
+  /* Remove scrollbar horizontal */
+  body { overflow-x: hidden; }
+
+  /* Scroll padding para teclado virtual */
+  .scroll-container {
+    scroll-padding-bottom: 120px;
+  }
+}
+
+@layer utilities {
+  .bg-primary-gradient {
+    background: linear-gradient(135deg, #FF6B35, #FF8C42);
+  }
+
+  .text-gradient {
+    background: linear-gradient(135deg, #FF6B35, #FF8C42);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .shadow-cta {
+    box-shadow: 0 8px 24px rgba(255, 107, 53, 0.35);
+  }
+
+  .shadow-float {
+    box-shadow: 0 8px 32px rgba(26, 26, 46, 0.06);
+  }
+
+  .glass {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(225, 191, 181, 0.15);
+  }
+
+  .dashed-border-primary {
+    background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='16' ry='16' stroke='%23AB3500' stroke-width='2' stroke-dasharray='12%2c 12' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e");
+    border-radius: 1rem;
+  }
+
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    font-family: 'Material Symbols Outlined';
+    font-size: 24px;
+    line-height: 1;
+    display: inline-block;
+    vertical-align: middle;
+    user-select: none;
+  }
+
+  .icon-filled {
+    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+}

@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment variables
+.env
+.env.production
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# PocketBase data (keep only binary placeholder, not data)
+pocketbase/pb_data/
+pocketbase/pb_migrations/
+
+# Capacitor
+android/.gradle/
+android/build/
+android/app/build/
+android/.idea/workspace.xml
+android/.idea/tasks.xml
+android/.idea/gradle.xml
+android/local.properties

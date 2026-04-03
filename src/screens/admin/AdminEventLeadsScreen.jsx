@@ -16,10 +16,11 @@ function formatDate(d) {
 }
 
 function toCSV(leads) {
-  const headers = ['Nome', 'Email', 'WhatsApp', 'Empresa', 'Cargo', 'Qualificação', 'Observações', 'Evento', 'Data']
+  const headers = ['Nome', 'Email', 'WhatsApp', 'Empresa', 'Cargo', 'Qualificação', 'Cadastrado por', 'Observações', 'Evento', 'Data']
   const rows = leads.map(l => [
     l.name, l.email, l.phone, l.company, l.role,
-    ({ hot: 'Quente', warm: 'Morno', cold: 'Frio' }[l.temperature] || l.temperature), l.notes, l.event_name, formatDate(l.created),
+    ({ hot: 'Quente', warm: 'Morno', cold: 'Frio' }[l.temperature] || l.temperature),
+    l.captured_by, l.notes, l.event_name, formatDate(l.created),
   ].map(v => `"${(v || '').replace(/"/g, '""')}"`))
   return [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n')
 }
@@ -34,6 +35,7 @@ export default function AdminEventLeadsScreen() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [filterTemp, setFilterTemp] = useState('all')
+  const [filterBy, setFilterBy] = useState('all')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalItems, setTotalItems] = useState(0)
@@ -83,9 +85,11 @@ export default function AdminEventLeadsScreen() {
     }
   }
 
-  const filtered = leads.filter(l =>
-    !search || [l.name, l.email, l.company, l.phone, l.role].some(v => v?.toLowerCase().includes(search.toLowerCase()))
-  )
+  const capturedByOptions = [...new Set(leads.map(l => l.captured_by).filter(Boolean))].sort()
+
+  const filtered = leads
+    .filter(l => filterBy === 'all' || l.captured_by === filterBy)
+    .filter(l => !search || [l.name, l.email, l.company, l.phone, l.role, l.captured_by].some(v => v?.toLowerCase().includes(search.toLowerCase())))
 
   const displayName = event?.name || '...'
   const hot  = leads.filter(l => l.temperature === 'hot').length
@@ -142,7 +146,7 @@ export default function AdminEventLeadsScreen() {
               className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-300 text-sm"
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {[
               { value: 'all',  label: 'Todos' },
               { value: 'hot',  label: '🔥 Quente' },
@@ -164,6 +168,32 @@ export default function AdminEventLeadsScreen() {
           </div>
         </div>
 
+        {/* Filtro por capturador */}
+        {capturedByOptions.length > 1 && (
+          <div className="flex flex-wrap gap-2 mb-5 items-center">
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mr-1">Cadastrado por:</span>
+            <button
+              onClick={() => setFilterBy('all')}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                filterBy === 'all' ? 'bg-orange-500 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              Todos
+            </button>
+            {capturedByOptions.map(name => (
+              <button
+                key={name}
+                onClick={() => setFilterBy(filterBy === name ? 'all' : name)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                  filterBy === name ? 'bg-orange-500 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                {name}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Tabela */}
         {loading ? (
           <div className="flex justify-center py-20">
@@ -181,7 +211,7 @@ export default function AdminEventLeadsScreen() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-gray-50 border-b border-gray-100">
-                      {['Nome','Email','WhatsApp','Empresa','Cargo','Qualif.','Data','Obs.'].map(h => (
+                      {['Nome','Email','WhatsApp','Empresa','Cargo','Qualif.','Cadastrado por','Obs.'].map(h => (
                         <th key={h} className="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
                       ))}
                     </tr>
@@ -203,7 +233,7 @@ export default function AdminEventLeadsScreen() {
                           <td className="px-4 py-3 whitespace-nowrap">
                             <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${temp.bg} ${temp.text}`}>{temp.label}</span>
                           </td>
-                          <td className="px-4 py-3 text-gray-500 whitespace-nowrap text-xs">{formatDate(lead.created)}</td>
+                          <td className="px-4 py-3 text-gray-700 whitespace-nowrap text-xs font-medium">{lead.captured_by || <span className="text-gray-300">—</span>}</td>
                           <td className="px-4 py-3 text-gray-500 max-w-[180px]">
                             <span className="line-clamp-2 text-xs">{lead.notes || <span className="text-gray-300">—</span>}</span>
                           </td>

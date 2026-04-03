@@ -63,7 +63,7 @@ export default function AdminLoginScreen() {
                   onChange={e => setEmail(e.target.value)}
                   placeholder="seu@email.com"
                   autoComplete="email"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-300 focus:bg-white text-sm transition-all"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-300 focus:bg-white text-sm text-gray-900 placeholder:text-gray-400 transition-all"
                 />
               </div>
             </div>
@@ -78,7 +78,7 @@ export default function AdminLoginScreen() {
                   onChange={e => setPassword(e.target.value)}
                   placeholder="••••••••"
                   autoComplete="current-password"
-                  className="w-full pl-10 pr-10 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-300 focus:bg-white text-sm transition-all"
+                  className="w-full pl-10 pr-10 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-300 focus:bg-white text-sm text-gray-900 placeholder:text-gray-400 transition-all"
                 />
                 <button type="button" onClick={() => setShowPwd(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
                   <span className="material-symbols-outlined text-[20px]">{showPwd ? 'visibility_off' : 'visibility'}</span>

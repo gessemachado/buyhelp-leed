@@ -13,6 +13,140 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Tokens de cor — Tema Claro (:root) ──────────────────────────────── */
+:root {
+  /* Primary */
+  --color-primary:                    171 53 0;
+  --color-primary-container:          255 107 53;
+  --color-primary-fixed:              255 219 208;
+  --color-primary-fixed-dim:          255 181 157;
+  --color-on-primary:                 255 255 255;
+  --color-on-primary-container:       95 25 0;
+  --color-on-primary-fixed:           57 12 0;
+  --color-on-primary-fixed-variant:   131 38 0;
+  /* Secondary */
+  --color-secondary:                  93 92 116;
+  --color-secondary-container:        226 224 252;
+  --color-secondary-fixed:            226 224 252;
+  --color-secondary-fixed-dim:        198 196 223;
+  --color-on-secondary:               255 255 255;
+  --color-on-secondary-container:     99 98 122;
+  --color-on-secondary-fixed:         26 26 46;
+  --color-on-secondary-fixed-variant: 69 69 91;
+  /* Tertiary */
+  --color-tertiary:                   0 108 73;
+  --color-tertiary-container:         0 175 121;
+  --color-tertiary-fixed:             111 251 190;
+  --color-tertiary-fixed-dim:         78 222 163;
+  --color-on-tertiary:                255 255 255;
+  --color-on-tertiary-container:      0 58 37;
+  --color-on-tertiary-fixed:          0 33 19;
+  --color-on-tertiary-fixed-variant:  0 82 54;
+  /* Background / Surface */
+  --color-background:                 249 249 255;
+  --color-on-background:              21 28 39;
+  --color-surface:                    249 249 255;
+  --color-surface-bright:             249 249 255;
+  --color-surface-dim:                211 218 234;
+  --color-surface-tint:               171 53 0;
+  --color-surface-variant:            220 226 243;
+  --color-surface-container:          231 238 254;
+  --color-surface-container-high:     226 232 248;
+  --color-surface-container-highest:  220 226 243;
+  --color-surface-container-low:      240 243 255;
+  --color-surface-container-lowest:   255 255 255;
+  --color-on-surface:                 21 28 39;
+  --color-on-surface-variant:         89 65 57;
+  /* Error */
+  --color-error:                      186 26 26;
+  --color-error-container:            255 218 214;
+  --color-on-error:                   255 255 255;
+  --color-on-error-container:         147 0 10;
+  /* Outline */
+  --color-outline:                    141 113 104;
+  --color-outline-variant:            225 191 181;
+  /* Inverse */
+  --color-inverse-primary:            255 181 157;
+  --color-inverse-surface:            42 49 61;
+  --color-inverse-on-surface:         235 241 255;
+
+  /* Shadows */
+  --shadow-soft:  0 4px 20px rgba(0, 0, 0, 0.08);
+  --shadow-float: 0 8px 32px rgba(26, 26, 46, 0.06);
+  --shadow-cta:   0 8px 24px rgba(255, 107, 53, 0.35);
+
+  /* Glass */
+  --glass-bg:     rgba(249, 249, 255, 0.85);
+  --glass-border: rgba(225, 191, 181, 0.18);
+}
+
+/* ── Tokens de cor — Tema Escuro (.dark) ──────────────────────────────── */
+.dark {
+  /* Primary */
+  --color-primary:                    255 182 141;
+  --color-primary-container:          255 140 66;
+  --color-primary-fixed:              255 219 201;
+  --color-primary-fixed-dim:          255 182 141;
+  --color-on-primary:                 83 34 0;
+  --color-on-primary-container:       106 45 0;
+  --color-on-primary-fixed:           51 18 0;
+  --color-on-primary-fixed-variant:   118 51 0;
+  /* Secondary */
+  --color-secondary:                  255 181 157;
+  --color-secondary-container:        171 53 0;
+  --color-secondary-fixed:            255 219 208;
+  --color-secondary-fixed-dim:        255 181 157;
+  --color-on-secondary:               93 25 0;
+  --color-on-secondary-container:     255 206 190;
+  --color-on-secondary-fixed:         228 225 233;
+  --color-on-secondary-fixed-variant: 131 39 0;
+  /* Tertiary */
+  --color-tertiary:                   76 214 255;
+  --color-tertiary-container:         0 185 226;
+  --color-tertiary-fixed:             183 234 255;
+  --color-tertiary-fixed-dim:         76 214 255;
+  --color-on-tertiary:                0 53 67;
+  --color-on-tertiary-container:      0 69 86;
+  --color-on-tertiary-fixed:          0 31 40;
+  --color-on-tertiary-fixed-variant:  0 78 96;
+  /* Background / Surface */
+  --color-background:                 19 19 24;
+  --color-on-background:              228 225 233;
+  --color-surface:                    19 19 24;
+  --color-surface-bright:             57 57 62;
+  --color-surface-dim:                19 19 24;
+  --color-surface-tint:               255 182 141;
+  --color-surface-variant:            53 52 58;
+  --color-surface-container:          31 31 36;
+  --color-surface-container-high:     42 41 47;
+  --color-surface-container-highest:  53 52 58;
+  --color-surface-container-low:      27 27 32;
+  --color-surface-container-lowest:   14 14 19;
+  --color-on-surface:                 228 225 233;
+  --color-on-surface-variant:         221 193 179;
+  /* Error */
+  --color-error:                      255 180 171;
+  --color-error-container:            147 0 10;
+  --color-on-error:                   105 0 5;
+  --color-on-error-container:         255 218 214;
+  /* Outline */
+  --color-outline:                    164 140 127;
+  --color-outline-variant:            86 67 56;
+  /* Inverse */
+  --color-inverse-primary:            155 69 0;
+  --color-inverse-surface:            228 225 233;
+  --color-inverse-on-surface:         48 48 53;
+
+  /* Shadows */
+  --shadow-soft:  0 4px 20px rgba(0, 0, 0, 0.4);
+  --shadow-float: 0 8px 32px rgba(0, 0, 0, 0.35);
+  --shadow-cta:   0 8px 24px rgba(255, 140, 66, 0.4);
+
+  /* Glass */
+  --glass-bg:     rgba(19, 19, 24, 0.9);
+  --glass-border: rgba(255, 182, 141, 0.08);
+}
+
 @layer base {
   * {
     -webkit-tap-highlight-color: transparent;
@@ -26,8 +160,8 @@
 
   body {
     font-family: 'Be Vietnam Pro', sans-serif;
-    background-color: #f9f9ff;
-    color: #151c27;
+    background-color: rgb(var(--color-background));
+    color: rgb(var(--color-on-surface));
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -68,18 +202,27 @@
   }
 
   .shadow-cta {
-    box-shadow: 0 8px 24px rgba(255, 107, 53, 0.35);
+    box-shadow: var(--shadow-cta);
   }
 
   .shadow-float {
-    box-shadow: 0 8px 32px rgba(26, 26, 46, 0.06);
+    box-shadow: var(--shadow-float);
   }
 
+  /* Glass genérico (ex: OfflineBanner) */
   .glass {
-    background: rgba(255, 255, 255, 0.7);
+    background: var(--glass-bg);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(225, 191, 181, 0.15);
+    border: 1px solid var(--glass-border);
+  }
+
+  /* Glass para headers fixos */
+  .glass-header {
+    background: var(--glass-bg);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--glass-border);
   }
 
   .dashed-border-primary {

@@ -1,13 +1,10 @@
 import { getPendingLeads, markAsSynced } from './db'
+import { pb } from './pocketbase'
 
-const PB_URL = import.meta.env.VITE_PB_URL || 'https://buyhelp-pb.fly.dev'
-
-function getToken() {
-  try {
-    const raw = localStorage.getItem('pocketbase_auth')
-    if (raw) return JSON.parse(raw).token
-  } catch {}
-  return null
+// PocketBase valida formato de email — envia vazio se inválido
+function safeEmail(email) {
+  if (!email) return ''
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) ? email : ''
 }
 
 let isSyncing = false
@@ -23,42 +20,33 @@ export async function syncPendingLeads() {
     const pending = await getPendingLeads()
     if (pending.length === 0) return { synced: 0, failed: 0 }
 
-    const token = getToken()
+    // Tenta renovar o token se o usuário estiver autenticado
+    if (pb.authStore.isValid) {
+      try { await pb.collection('users').authRefresh() } catch (_) {}
+    }
 
     for (const lead of pending) {
       try {
-        const res = await fetch(`${PB_URL}/api/collections/leads/records`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: token } : {}),
-          },
-          body: JSON.stringify({
-            name:        lead.name,
-            email:       lead.email,
-            phone:       lead.phone,
-            company:     lead.company,
-            role:        lead.role,
-            temperature: lead.temperature,
-            notes:       lead.notes,
-            device_id:   lead.device_id,
-            event_name:  lead.event_name,
-            badge_front:  lead.badge_front  || '',
-            badge_back:   lead.badge_back   || '',
-            captured_by:  lead.captured_by  || '',
-            created:      lead.created      || new Date().toISOString(),
-          }),
+        await pb.collection('leads').create({
+          name:        lead.name,
+          email:       safeEmail(lead.email),
+          phone:       lead.phone       || '',
+          company:     lead.company     || '',
+          role:        lead.role        || '',
+          temperature: lead.temperature || 'warm',
+          notes:       lead.notes       || '',
+          device_id:   lead.device_id   || '',
+          event_name:  lead.event_name  || '',
+          badge_front: lead.badge_front || '',
+          badge_back:  lead.badge_back  || '',
+          captured_by: lead.captured_by || '',
+          website:     lead.website     || '',
+          created:     lead.created     || new Date().toISOString(),
         })
-        if (res.ok) {
-          await markAsSynced(lead.id)
-          synced++
-        } else {
-          const body = await res.json().catch(() => ({}))
-          console.error('[Sync] Servidor recusou lead', lead.id, res.status, body?.message)
-          failed++
-        }
+        await markAsSynced(lead.id)
+        synced++
       } catch (err) {
-        console.error('[Sync] Falha de rede ao enviar lead', lead.id, err.message)
+        console.error('[Sync] Falha ao enviar lead', lead.id, err?.message || err)
         failed++
       }
     }

@@ -9,16 +9,16 @@ import { OfflineBanner } from '../components/OfflineBanner'
 import { BottomNav } from '../components/BottomNav'
 
 const TEMP_OPTIONS = [
-  { value: 'hot',  label: '🔥 Quente', icon: 'local_fire_department', bg: 'bg-red-50',  border: 'border-red-400',  text: 'text-red-700' },
-  { value: 'warm', label: '♨️ Morno',  icon: 'thermostat',            bg: 'bg-amber-50', border: 'border-amber-400', text: 'text-amber-700' },
-  { value: 'cold', label: '❄️ Frio',   icon: 'ac_unit',               bg: 'bg-blue-50',  border: 'border-blue-400',  text: 'text-blue-700' },
+  { value: 'hot',  label: '🔥 Quente', icon: 'local_fire_department', bg: 'bg-red-50 dark:bg-red-950/30',    border: 'border-red-400 dark:border-red-700',    text: 'text-red-700 dark:text-red-400' },
+  { value: 'warm', label: '♨️ Morno',  icon: 'thermostat',            bg: 'bg-amber-50 dark:bg-amber-950/30', border: 'border-amber-400 dark:border-amber-700', text: 'text-amber-700 dark:text-amber-400' },
+  { value: 'cold', label: '❄️ Frio',   icon: 'ac_unit',               bg: 'bg-blue-50 dark:bg-blue-950/30',   border: 'border-blue-400 dark:border-blue-700',   text: 'text-blue-700 dark:text-blue-400' },
 ]
 
 export default function CaptureScreen() {
   const navigate = useNavigate()
   const location = useLocation()
   const EVENT_NAME = location.state?.eventName || 'Evento'
-  const { isOnline, refreshPendingCount } = useApp()
+  const { isOnline, refreshPendingCount, loadLeadsLocal } = useApp()
 
   const [form, setForm] = useState({
     name:        '',
@@ -26,6 +26,7 @@ export default function CaptureScreen() {
     phone:       '',
     company:     '',
     role:        '',
+    website:     '',
     temperature: 'warm',
     notes:       '',
   })
@@ -36,6 +37,7 @@ export default function CaptureScreen() {
   function setField(field, value) {
     setForm(f => ({ ...f, [field]: value }))
   }
+
 
   function maskPhone(value) {
     const digits = value.replace(/\D/g, '').slice(0, 11)
@@ -64,15 +66,17 @@ export default function CaptureScreen() {
         eventName:   EVENT_NAME,
         deviceId:    Capacitor.isNativePlatform() ? 'native' : 'web',
         capturedBy,
+        website:     form.website || '',
       })
       if (isOnline) {
         syncPendingLeads().catch(() => {})
       }
       await refreshPendingCount()
+      await loadLeadsLocal()
       setSaved(true)
       setTimeout(() => {
         setSaved(false)
-        setForm({ name: '', email: '', phone: '', company: '', role: '', temperature: 'warm', notes: '' })
+        setForm({ name: '', email: '', phone: '', company: '', role: '', website: '', temperature: 'warm', notes: '' })
       }, 1500)
     } catch (err) {
       console.error('[Save lead]', err)
@@ -94,15 +98,8 @@ export default function CaptureScreen() {
       />
 
       <header
-        className="fixed top-0 left-0 right-0 z-50 h-16 flex items-center justify-between px-6 max-w-lg mx-auto"
-        style={{
-          background: 'rgba(255,255,255,0.7)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          borderBottom: '1px solid rgba(225,191,181,0.15)',
-          boxShadow: '0 8px 32px rgba(26,26,46,0.06)',
-          marginTop: 4,
-        }}
+        className="glass-header fixed top-0 left-0 right-0 z-50 h-16 flex items-center justify-between px-6 max-w-lg mx-auto"
+        style={{ marginTop: 4 }}
       >
         <div className="flex items-center gap-3">
           <button
@@ -125,14 +122,7 @@ export default function CaptureScreen() {
       <main className="pt-20 px-6 space-y-6 max-w-lg mx-auto w-full">
         {!isOnline && (
           <div className="mt-2 flex justify-center">
-            <div
-              className="px-4 py-2 rounded-full flex items-center gap-2"
-              style={{
-                background: 'rgba(255,255,255,0.7)',
-                backdropFilter: 'blur(12px)',
-                border: '1px solid rgba(225,191,181,0.15)',
-              }}
-            >
+            <div className="glass px-4 py-2 rounded-full flex items-center gap-2">
               <span className="material-symbols-outlined text-primary text-[18px]">cloud_off</span>
               <span className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider font-label">
                 Modo offline
@@ -149,13 +139,14 @@ export default function CaptureScreen() {
         </div>
 
         <div className="bg-primary-fixed p-5 rounded-3xl flex gap-4 items-start border border-primary/10">
-          <div className="bg-white p-2 rounded-xl shadow-sm shrink-0">
+          <div className="bg-surface-container-lowest p-2 rounded-xl shadow-sm shrink-0">
             <span className="material-symbols-outlined icon-filled text-primary">lightbulb</span>
           </div>
           <p className="text-sm font-medium text-on-primary-fixed leading-relaxed">
             Funciona online e offline. Seus leads são salvos no dispositivo e sincronizados automaticamente ao reconectar.
           </p>
         </div>
+
 
         <section className="bg-surface-container-lowest rounded-3xl p-6 shadow-float space-y-5">
           <div className="space-y-1">
@@ -215,6 +206,16 @@ export default function CaptureScreen() {
               value={form.role}
               onChange={e => setField('role', e.target.value)}
               placeholder="Ex: Gerente Comercial"
+              className="input-field"
+            />
+          </Field>
+
+          <Field label="Site / Rede Social" icon="language">
+            <input
+              type="url"
+              value={form.website}
+              onChange={e => setField('website', e.target.value)}
+              placeholder="https://seusite.com.br"
               className="input-field"
             />
           </Field>

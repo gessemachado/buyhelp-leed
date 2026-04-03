@@ -1,6 +1,7 @@
 import { Capacitor } from '@capacitor/core'
 
 const isNative = () => Capacitor.isNativePlatform()
+const useNative = () => isNative() && sqliteDB !== null
 
 let sqliteDB = null
 
@@ -28,10 +29,10 @@ async function initNative() {
       synced      INTEGER DEFAULT 0
     );
   `)
-  // Migrações para instalações antigas
   try { await sqliteDB.execute(`ALTER TABLE leads ADD COLUMN badge_front  TEXT DEFAULT ''`) } catch {}
   try { await sqliteDB.execute(`ALTER TABLE leads ADD COLUMN badge_back   TEXT DEFAULT ''`) } catch {}
   try { await sqliteDB.execute(`ALTER TABLE leads ADD COLUMN captured_by TEXT DEFAULT ''`) } catch {}
+  try { await sqliteDB.execute(`ALTER TABLE leads ADD COLUMN website      TEXT DEFAULT ''`) } catch {}
 }
 
 const WEB_KEY = 'buyhelp_leads'
@@ -45,14 +46,18 @@ function webSave(leads) {
 }
 
 export async function initDB() {
-  if (isNative()) await initNative()
+  if (isNative()) {
+    try { await initNative() } catch (err) {
+      console.warn('[DB] SQLite falhou, usando localStorage:', err.message)
+    }
+  }
 }
 
 export async function saveLead(data) {
-  if (isNative()) {
+  if (useNative()) {
     const result = await sqliteDB.run(
-      `INSERT INTO leads (name, email, phone, company, role, temperature, notes, device_id, event_name, badge_front, badge_back, captured_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO leads (name, email, phone, company, role, temperature, notes, device_id, event_name, badge_front, badge_back, captured_by, website)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         data.name,
         data.email       || '',
@@ -66,6 +71,7 @@ export async function saveLead(data) {
         data.badgeFront  || '',
         data.badgeBack   || '',
         data.capturedBy  || '',
+        data.website     || '',
       ]
     )
     return result.changes?.lastId
@@ -87,6 +93,7 @@ export async function saveLead(data) {
     badge_front:  data.badgeFront  || '',
     badge_back:   data.badgeBack   || '',
     captured_by:  data.capturedBy  || '',
+    website:      data.website     || '',
     created:      new Date().toISOString(),
     synced:       0,
   })
@@ -95,7 +102,7 @@ export async function saveLead(data) {
 }
 
 export async function getPendingLeads() {
-  if (isNative()) {
+  if (useNative()) {
     const result = await sqliteDB.query(`SELECT * FROM leads WHERE synced = 0 ORDER BY created DESC`)
     return result.values ?? []
   }
@@ -103,7 +110,7 @@ export async function getPendingLeads() {
 }
 
 export async function getAllLeads() {
-  if (isNative()) {
+  if (useNative()) {
     const result = await sqliteDB.query(`SELECT * FROM leads ORDER BY created DESC`)
     return result.values ?? []
   }
@@ -111,7 +118,7 @@ export async function getAllLeads() {
 }
 
 export async function markAsSynced(id) {
-  if (isNative()) {
+  if (useNative()) {
     await sqliteDB.run(`UPDATE leads SET synced = 1 WHERE id = ?`, [id])
     return
   }
@@ -120,7 +127,7 @@ export async function markAsSynced(id) {
 }
 
 export async function getPendingCount() {
-  if (isNative()) {
+  if (useNative()) {
     const result = await sqliteDB.query(`SELECT COUNT(*) as count FROM leads WHERE synced = 0`)
     return result.values?.[0]?.count ?? 0
   }
@@ -128,9 +135,18 @@ export async function getPendingCount() {
 }
 
 export async function getLeadsCount() {
-  if (isNative()) {
+  if (useNative()) {
     const result = await sqliteDB.query(`SELECT COUNT(*) as count FROM leads`)
     return result.values?.[0]?.count ?? 0
   }
   return webGetAll().length
+}
+
+export async function resetDB() {
+  if (useNative()) {
+    await sqliteDB.execute(`DELETE FROM leads`)
+    await sqliteDB.execute(`DELETE FROM sqlite_sequence WHERE name='leads'`)
+    return
+  }
+  localStorage.removeItem(WEB_KEY)
 }

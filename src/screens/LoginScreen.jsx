@@ -78,7 +78,7 @@ export default function LoginScreen() {
                   onChange={e => setEmail(e.target.value)}
                   placeholder="seu@email.com"
                   autoComplete="email"
-                  className="w-full pl-11 pr-4 py-3.5 bg-surface-container-low border-none rounded-xl focus:ring-2 focus:ring-primary/30 focus:bg-white transition-all text-on-surface placeholder:text-on-surface-variant/40 font-body text-sm outline-none"
+                  className="w-full pl-11 pr-4 py-3.5 bg-surface-container-low border-none rounded-xl focus:ring-2 focus:ring-primary/30 focus:bg-surface-container-lowest transition-all text-on-surface placeholder:text-on-surface-variant/40 font-body text-sm outline-none"
                 />
               </div>
             </div>
@@ -98,7 +98,7 @@ export default function LoginScreen() {
                   onChange={e => setPassword(e.target.value)}
                   placeholder="••••••••"
                   autoComplete="current-password"
-                  className="w-full pl-11 pr-12 py-3.5 bg-surface-container-low border-none rounded-xl focus:ring-2 focus:ring-primary/30 focus:bg-white transition-all text-on-surface placeholder:text-on-surface-variant/40 font-body text-sm outline-none"
+                  className="w-full pl-11 pr-12 py-3.5 bg-surface-container-low border-none rounded-xl focus:ring-2 focus:ring-primary/30 focus:bg-surface-container-lowest transition-all text-on-surface placeholder:text-on-surface-variant/40 font-body text-sm outline-none"
                 />
                 <button
                   type="button"

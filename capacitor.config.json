@@ -3,6 +3,8 @@
   "appName": "BuyHelp Leads",
   "webDir": "dist",
   "server": {
+    "url": "https://buyhelp-app.fly.dev",
+    "cleartext": true,
     "androidScheme": "http"
   },
   "plugins": {

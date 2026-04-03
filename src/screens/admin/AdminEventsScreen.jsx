@@ -222,19 +222,19 @@ export default function AdminEventsScreen() {
               <div>
                 <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Nome *</label>
                 <input type="text" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Ex: ExpoVarejo 2026"
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-300 text-sm" />
+                  className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-300 text-sm text-gray-900 placeholder:text-gray-400" />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Data Início</label>
                   <input type="date" value={form.date_start} onChange={e => setForm(f => ({ ...f, date_start: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-300 text-sm" />
+                    className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-300 text-sm text-gray-900 placeholder:text-gray-400" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Data Fim</label>
                   <input type="date" value={form.date_end} onChange={e => setForm(f => ({ ...f, date_end: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-300 text-sm" />
+                    className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-300 text-sm text-gray-900 placeholder:text-gray-400" />
                 </div>
               </div>
 
@@ -258,13 +258,13 @@ export default function AdminEventsScreen() {
               <div>
                 <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Local</label>
                 <input type="text" value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} placeholder="Cidade - UF"
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-300 text-sm" />
+                  className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-300 text-sm text-gray-900 placeholder:text-gray-400" />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Descrição</label>
                 <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Detalhes do evento..." rows={3}
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-300 text-sm resize-none" />
+                  className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-300 text-sm text-gray-900 placeholder:text-gray-400 resize-none" />
               </div>
 
               {error && <p className="text-red-500 text-sm bg-red-50 rounded-lg px-3 py-2">{error}</p>}

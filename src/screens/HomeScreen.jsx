@@ -5,6 +5,8 @@ import { useApp } from '../context/AppContext'
 import { BottomNav } from '../components/BottomNav'
 import { OfflineBanner } from '../components/OfflineBanner'
 import { getLeadsCount } from '../lib/db'
+import { useTheme } from '../context/ThemeContext'
+import { useCallback } from 'react'
 
 const PB_URL = import.meta.env.VITE_PB_URL || 'https://buyhelp-pb.fly.dev'
 
@@ -43,7 +45,8 @@ function formatEventDate(ev) {
 
 export default function HomeScreen() {
   const navigate = useNavigate()
-  const { pendingCount, isOnline } = useApp()
+  const { pendingCount, isOnline, refreshActiveEvent } = useApp()
+  const { theme, toggleTheme } = useTheme()
   const user = pb.authStore.model
 
   const [events, setEvents]           = useState([])
@@ -77,6 +80,7 @@ export default function HomeScreen() {
         const data = await res.json()
         const items = data.items || []
         localStorage.setItem('buyhelp_events_cache', JSON.stringify(items))
+        refreshActiveEvent()
         applyEvents(items)
       }
     } catch (err) {
@@ -96,12 +100,6 @@ export default function HomeScreen() {
     setActiveEvent(active)
   }
 
-  function handleLogout() {
-    pb.authStore.clear()
-    localStorage.removeItem('pocketbase_auth')
-    navigate('/login', { replace: true })
-  }
-
   function goCapture(event) {
     navigate('/capture', { state: { eventName: event.name, eventId: event.id } })
   }
@@ -110,15 +108,7 @@ export default function HomeScreen() {
 
   return (
     <div className="min-h-dvh bg-surface-container-low font-body pb-24">
-      <header
-        className="fixed top-0 left-0 right-0 z-50 h-16 flex items-center justify-between px-6 max-w-lg mx-auto"
-        style={{
-          background: 'rgba(255,255,255,0.8)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          borderBottom: '1px solid rgba(225,191,181,0.15)',
-        }}
-      >
+      <header className="glass-header fixed top-0 left-0 right-0 z-50 h-16 flex items-center justify-between px-6 max-w-lg mx-auto">
         <div className="flex items-center gap-2">
           <span className="material-symbols-outlined icon-filled text-primary">rocket_launch</span>
           <span className="font-headline font-bold text-lg text-on-secondary-fixed">BuyHelp</span>
@@ -127,8 +117,16 @@ export default function HomeScreen() {
           {isOnline && pendingCount === 0 && (
             <span className="material-symbols-outlined icon-filled text-[20px]" style={{ color: '#006c49' }}>cloud_done</span>
           )}
-          <button onClick={handleLogout} className="text-on-surface-variant hover:text-primary transition-colors">
-            <span className="material-symbols-outlined text-[22px]">logout</span>
+          <button
+            onClick={toggleTheme}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-container-low text-on-surface-variant hover:text-primary transition-all active:scale-95"
+          >
+            <span className="material-symbols-outlined text-[20px]">
+              {theme === 'dark' ? 'light_mode' : 'dark_mode'}
+            </span>
+            <span className="text-xs font-semibold font-label">
+              {theme === 'dark' ? 'Claro' : 'Escuro'}
+            </span>
           </button>
         </div>
       </header>
@@ -185,8 +183,8 @@ export default function HomeScreen() {
                       )}
                     </div>
                   </div>
-                  <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-bold tracking-wider whitespace-nowrap shrink-0">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold tracking-wider whitespace-nowrap shrink-0">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
                     AO VIVO
                   </span>
                 </div>
@@ -237,8 +235,8 @@ export default function HomeScreen() {
                     onClick={() => goCapture(event)}
                     className={`flex items-center p-4 bg-surface-container-lowest rounded-2xl gap-4 shadow-soft w-full text-left active:scale-[0.98] transition-all ${status === 'closed' ? 'opacity-50' : ''}`}
                   >
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${status === 'soon' ? 'bg-surface-container-low' : 'bg-slate-100'}`}>
-                      <span className={`material-symbols-outlined ${status === 'soon' ? 'text-primary' : 'text-slate-400'}`}>
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${status === 'soon' ? 'bg-surface-container-low' : 'bg-surface-container-high'}`}>
+                      <span className={`material-symbols-outlined ${status === 'soon' ? 'text-primary' : 'text-on-surface-variant'}`}>
                         {status === 'closed' ? 'history' : 'event'}
                       </span>
                     </div>
@@ -249,11 +247,11 @@ export default function HomeScreen() {
                       </p>
                     </div>
                     {status === 'soon' ? (
-                      <span className="shrink-0 px-2.5 py-1.5 rounded-lg text-[10px] font-bold" style={{ background: '#FFF5E9', color: '#FF8C42' }}>EM BREVE</span>
+                      <span className="shrink-0 px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-primary-fixed text-primary">EM BREVE</span>
                     ) : status === 'closed' ? (
                       <span className="shrink-0 px-2.5 py-1.5 rounded-lg bg-surface-container-high text-on-surface-variant text-[10px] font-bold uppercase">Encerrado</span>
                     ) : (
-                      <span className="shrink-0 px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-emerald-50 text-emerald-600">ATIVO</span>
+                      <span className="shrink-0 px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400">ATIVO</span>
                     )}
                   </button>
                 )

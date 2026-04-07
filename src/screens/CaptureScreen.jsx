@@ -245,31 +245,6 @@ export default function CaptureScreen() {
             />
           </Field>
 
-          <div className="space-y-2">
-            <label className="block text-xs font-bold text-on-secondary-fixed uppercase tracking-widest ml-1">
-              Qualificação
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { value: 'hot',  label: 'Quente', emoji: '🔥', active: 'bg-red-500 text-white shadow-lg' },
-                { value: 'warm', label: 'Morno',  emoji: '♨️', active: 'bg-amber-500 text-white shadow-lg' },
-                { value: 'cold', label: 'Frio',   emoji: '❄️', active: 'bg-blue-500 text-white shadow-lg' },
-              ].map(opt => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setField('temperature', opt.value)}
-                  className={`py-3 rounded-xl text-sm font-bold transition-all active:scale-95 ${
-                    form.temperature === opt.value
-                      ? opt.active
-                      : 'bg-surface-container-low text-on-surface-variant border border-outline-variant'
-                  }`}
-                >
-                  {opt.emoji} {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
 
           <div className="space-y-1.5">
             <label className="block text-xs font-bold text-on-secondary-fixed uppercase tracking-widest ml-1">

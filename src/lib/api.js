@@ -11,6 +11,19 @@ function getToken() {
   return null
 }
 
+async function reqForm(method, path, formData) {
+  const token = getToken()
+  const res = await fetch(`${PB_URL}${path}`, {
+    method,
+    headers: { ...(token ? { Authorization: token } : {}) },
+    body: formData,
+  })
+  if (res.status === 204) return null
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.message || `HTTP ${res.status}`)
+  return json
+}
+
 async function req(method, path, body) {
   const token = getToken()
   const res = await fetch(`${PB_URL}${path}`, {
@@ -33,6 +46,38 @@ export const eventsApi = {
   create: (data) => req('POST', '/api/collections/events/records', data),
   update: (id, data) => req('PATCH', `/api/collections/events/records/${id}`, data),
   delete: (id) => req('DELETE', `/api/collections/events/records/${id}`),
+}
+
+// Kanban
+export const kanbanApi = {
+  listColumns: () => req('GET', '/api/collections/kanban_columns/records?perPage=200'),
+  createColumn: (data) => req('POST', '/api/collections/kanban_columns/records', data),
+  updateColumn: (id, data) => req('PATCH', `/api/collections/kanban_columns/records/${id}`, data),
+  deleteColumn: (id) => req('DELETE', `/api/collections/kanban_columns/records/${id}`),
+
+  listUsers: () => req('GET', '/api/collections/users/records?perPage=200'),
+  listCards: () => req('GET', '/api/collections/kanban_cards/records?perPage=500'),
+  createCard: (data, files) => {
+    if (!files?.length) return req('POST', '/api/collections/kanban_cards/records', data)
+    const form = new FormData()
+    Object.entries(data).forEach(([k, v]) => v != null && form.append(k, v))
+    files.forEach(f => form.append('attachments', f))
+    return reqForm('POST', '/api/collections/kanban_cards/records', form)
+  },
+  updateCard: (id, data, files, removedFiles) => {
+    if (!files?.length && !removedFiles?.length) return req('PATCH', `/api/collections/kanban_cards/records/${id}`, data)
+    const form = new FormData()
+    Object.entries(data).forEach(([k, v]) => v != null && form.append(k, v))
+    files?.forEach(f => form.append('attachments', f))
+    removedFiles?.forEach(name => form.append('attachments-', name))
+    return reqForm('PATCH', `/api/collections/kanban_cards/records/${id}`, form)
+  },
+  deleteCard: (id) => req('DELETE', `/api/collections/kanban_cards/records/${id}`),
+  fileUrl: (cardId, filename) => `${PB_URL}/api/files/kanban_cards/${cardId}/${filename}`,
+
+  listComments:  (cardId) => req('GET', `/api/collections/kanban_comments/records?filter=card_id%3D'${cardId}'&perPage=200`),
+  createComment: (data)   => req('POST', '/api/collections/kanban_comments/records', data),
+  deleteComment: (id)     => req('DELETE', `/api/collections/kanban_comments/records/${id}`),
 }
 
 // Leads

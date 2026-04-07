@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import { initDB, getPendingCount, getAllLeads } from '../lib/db'
 import { syncPendingLeads } from '../lib/sync'
 import { useNetworkStatus } from '../hooks/useNetworkStatus'
+import { pb } from '../lib/pocketbase'
 
 const AppContext = createContext(null)
 
@@ -59,6 +60,10 @@ export function AppProvider({ children }) {
         console.error('[AppContext] DB init error:', err)
         setDbError(err.message)
       })
+    // Atualiza o modelo do usuário para pegar campos novos (ex: eventos_access)
+    if (pb.authStore.isValid) {
+      pb.collection('users').authRefresh().catch(() => {})
+    }
   }, [])
 
   useEffect(() => {

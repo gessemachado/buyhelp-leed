@@ -47,7 +47,8 @@ export default function HomeScreen() {
   const navigate = useNavigate()
   const { pendingCount, isOnline, refreshActiveEvent } = useApp()
   const { theme, toggleTheme } = useTheme()
-  const user = pb.authStore.model
+  const [user, setUser] = useState(pb.authStore.model)
+  const [checkingAccess, setCheckingAccess] = useState(true)
 
   const [events, setEvents]           = useState([])
   const [activeEvent, setActiveEvent] = useState(null)
@@ -55,6 +56,11 @@ export default function HomeScreen() {
   const [loading, setLoading]         = useState(true)
 
   useEffect(() => {
+    // Atualiza modelo do usuário para pegar eventos_access atualizado
+    pb.collection('users').authRefresh()
+      .then(() => setUser(pb.authStore.model))
+      .catch(() => {})
+      .finally(() => setCheckingAccess(false))
     loadEvents()
     getLeadsCount().then(setLocalCount).catch(() => {})
   }, [])
@@ -105,6 +111,37 @@ export default function HomeScreen() {
   }
 
   const otherEvents = events.filter(e => e.id !== activeEvent?.id)
+
+  // Aguarda verificação de acesso
+  if (checkingAccess) {
+    return (
+      <div className="min-h-dvh bg-surface-container-low flex items-center justify-center">
+        <span className="material-symbols-outlined text-4xl text-primary animate-spin">sync</span>
+      </div>
+    )
+  }
+
+  // Sem acesso a eventos
+  if (user && user.eventos_access !== true) {
+    return (
+      <div className="min-h-dvh bg-surface-container-low font-body flex flex-col items-center justify-center px-6 text-center gap-6">
+        <span className="material-symbols-outlined text-6xl text-on-surface-variant/30">lock</span>
+        <div>
+          <h2 className="font-headline font-bold text-xl text-on-surface mb-1">Acesso Restrito</h2>
+          <p className="text-on-surface-variant text-sm">Você não tem permissão para acessar a funcionalidade de eventos.</p>
+          <p className="text-on-surface-variant text-sm mt-1">Entre em contato com o administrador.</p>
+        </div>
+        <button
+          onClick={() => { pb.authStore.clear(); navigate('/login') }}
+          className="flex items-center gap-2 px-6 py-3 rounded-xl text-white font-semibold text-sm"
+          style={{ background: 'linear-gradient(135deg,#FF6B35,#FF8C42)' }}
+        >
+          <span className="material-symbols-outlined text-[18px]">logout</span>
+          Sair
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-dvh bg-surface-container-low font-body pb-24">

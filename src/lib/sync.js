@@ -39,9 +39,11 @@ export async function syncPendingLeads() {
           event_name:  lead.event_name  || '',
           badge_front: lead.badge_front || '',
           badge_back:  lead.badge_back  || '',
-          captured_by: lead.captured_by || '',
-          website:     lead.website     || '',
-          created:     lead.created     || new Date().toISOString(),
+          captured_by:      lead.captured_by      || '',
+          website:          lead.website          || '',
+          quantidade_lojas: lead.quantidade_lojas || '',
+          software_house:   lead.software_house   || '',
+          created:          lead.created          || new Date().toISOString(),
         })
         await markAsSynced(lead.id)
         synced++

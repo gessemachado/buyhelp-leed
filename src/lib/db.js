@@ -12,27 +12,31 @@ async function initNative() {
   await sqliteDB.open()
   await sqliteDB.execute(`
     CREATE TABLE IF NOT EXISTS leads (
-      id          INTEGER PRIMARY KEY AUTOINCREMENT,
-      name        TEXT NOT NULL,
-      email       TEXT,
-      phone       TEXT,
-      company     TEXT,
-      role        TEXT,
-      temperature TEXT DEFAULT 'warm',
-      notes       TEXT,
-      device_id   TEXT,
-      event_name  TEXT,
-      badge_front TEXT,
-      badge_back  TEXT,
-      captured_by TEXT,
-      created     TEXT DEFAULT (datetime('now')),
-      synced      INTEGER DEFAULT 0
+      id               INTEGER PRIMARY KEY AUTOINCREMENT,
+      name             TEXT NOT NULL,
+      email            TEXT,
+      phone            TEXT,
+      company          TEXT,
+      role             TEXT,
+      temperature      TEXT DEFAULT 'warm',
+      notes            TEXT,
+      device_id        TEXT,
+      event_name       TEXT,
+      badge_front      TEXT,
+      badge_back       TEXT,
+      captured_by      TEXT,
+      quantidade_lojas TEXT,
+      software_house   TEXT,
+      created          TEXT DEFAULT (datetime('now')),
+      synced           INTEGER DEFAULT 0
     );
   `)
   try { await sqliteDB.execute(`ALTER TABLE leads ADD COLUMN badge_front  TEXT DEFAULT ''`) } catch {}
   try { await sqliteDB.execute(`ALTER TABLE leads ADD COLUMN badge_back   TEXT DEFAULT ''`) } catch {}
   try { await sqliteDB.execute(`ALTER TABLE leads ADD COLUMN captured_by TEXT DEFAULT ''`) } catch {}
-  try { await sqliteDB.execute(`ALTER TABLE leads ADD COLUMN website      TEXT DEFAULT ''`) } catch {}
+  try { await sqliteDB.execute(`ALTER TABLE leads ADD COLUMN website           TEXT DEFAULT ''`) } catch {}
+  try { await sqliteDB.execute(`ALTER TABLE leads ADD COLUMN quantidade_lojas  TEXT DEFAULT ''`) } catch {}
+  try { await sqliteDB.execute(`ALTER TABLE leads ADD COLUMN software_house    TEXT DEFAULT ''`) } catch {}
 }
 
 const WEB_KEY = 'buyhelp_leads'
@@ -56,22 +60,24 @@ export async function initDB() {
 export async function saveLead(data) {
   if (useNative()) {
     const result = await sqliteDB.run(
-      `INSERT INTO leads (name, email, phone, company, role, temperature, notes, device_id, event_name, badge_front, badge_back, captured_by, website)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO leads (name, email, phone, company, role, temperature, notes, device_id, event_name, badge_front, badge_back, captured_by, website, quantidade_lojas, software_house)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         data.name,
-        data.email       || '',
-        data.phone       || '',
-        data.company     || '',
-        data.role        || '',
-        data.temperature || 'warm',
-        data.notes       || '',
-        data.deviceId    || '',
-        data.eventName   || '',
-        data.badgeFront  || '',
-        data.badgeBack   || '',
-        data.capturedBy  || '',
-        data.website     || '',
+        data.email            || '',
+        data.phone            || '',
+        data.company          || '',
+        data.role             || '',
+        data.temperature      || 'warm',
+        data.notes            || '',
+        data.deviceId         || '',
+        data.eventName        || '',
+        data.badgeFront       || '',
+        data.badgeBack        || '',
+        data.capturedBy       || '',
+        data.website          || '',
+        data.quantidade_lojas || '',
+        data.software_house   || '',
       ]
     )
     return result.changes?.lastId
@@ -92,9 +98,11 @@ export async function saveLead(data) {
     event_name:   data.eventName   || '',
     badge_front:  data.badgeFront  || '',
     badge_back:   data.badgeBack   || '',
-    captured_by:  data.capturedBy  || '',
-    website:      data.website     || '',
-    created:      new Date().toISOString(),
+    captured_by:      data.capturedBy       || '',
+    website:          data.website          || '',
+    quantidade_lojas: data.quantidade_lojas || '',
+    software_house:   data.software_house   || '',
+    created:          new Date().toISOString(),
     synced:       0,
   })
   webSave(leads)

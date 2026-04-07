@@ -8,27 +8,31 @@ import { useApp } from '../context/AppContext'
 import { OfflineBanner } from '../components/OfflineBanner'
 import { BottomNav } from '../components/BottomNav'
 
-const TEMP_OPTIONS = [
-  { value: 'hot',  label: '🔥 Quente', icon: 'local_fire_department', bg: 'bg-red-50 dark:bg-red-950/30',    border: 'border-red-400 dark:border-red-700',    text: 'text-red-700 dark:text-red-400' },
-  { value: 'warm', label: '♨️ Morno',  icon: 'thermostat',            bg: 'bg-amber-50 dark:bg-amber-950/30', border: 'border-amber-400 dark:border-amber-700', text: 'text-amber-700 dark:text-amber-400' },
-  { value: 'cold', label: '❄️ Frio',   icon: 'ac_unit',               bg: 'bg-blue-50 dark:bg-blue-950/30',   border: 'border-blue-400 dark:border-blue-700',   text: 'text-blue-700 dark:text-blue-400' },
-]
 
 export default function CaptureScreen() {
   const navigate = useNavigate()
   const location = useLocation()
+
+  // Redireciona se não tiver acesso a eventos
+  const _user = pb.authStore.model
+  if (_user && _user.eventos_access !== true) {
+    navigate('/home', { replace: true })
+    return null
+  }
   const EVENT_NAME = location.state?.eventName || 'Evento'
   const { isOnline, refreshPendingCount, loadLeadsLocal } = useApp()
 
   const [form, setForm] = useState({
-    name:        '',
-    email:       '',
-    phone:       '',
-    company:     '',
-    role:        '',
-    website:     '',
-    temperature: 'warm',
-    notes:       '',
+    name:             '',
+    email:            '',
+    phone:            '',
+    company:          '',
+    role:             '',
+    website:          '',
+    quantidade_lojas: '',
+    software_house:   '',
+    temperature:      'warm',
+    notes:            '',
   })
   const [formError, setFormError] = useState('')
   const [saving, setSaving]       = useState(false)
@@ -76,7 +80,7 @@ export default function CaptureScreen() {
       setSaved(true)
       setTimeout(() => {
         setSaved(false)
-        setForm({ name: '', email: '', phone: '', company: '', role: '', website: '', temperature: 'warm', notes: '' })
+        setForm({ name: '', email: '', phone: '', company: '', role: '', website: '', quantidade_lojas: '', software_house: '', temperature: 'warm', notes: '' })
       }, 1500)
     } catch (err) {
       console.error('[Save lead]', err)
@@ -220,26 +224,48 @@ export default function CaptureScreen() {
             />
           </Field>
 
+          <Field label="Qtd. de Lojas" icon="storefront">
+            <input
+              type="number"
+              min="0"
+              value={form.quantidade_lojas}
+              onChange={e => setField('quantidade_lojas', e.target.value)}
+              placeholder="0"
+              className="input-field"
+            />
+          </Field>
+
+          <Field label="Software House" icon="terminal">
+            <input
+              type="text"
+              value={form.software_house}
+              onChange={e => setField('software_house', e.target.value)}
+              placeholder="Ex: TOTVS"
+              className="input-field"
+            />
+          </Field>
+
           <div className="space-y-2">
             <label className="block text-xs font-bold text-on-secondary-fixed uppercase tracking-widest ml-1">
-              Qualificação do Lead
+              Qualificação
             </label>
-            <div className="grid grid-cols-3 gap-3">
-              {TEMP_OPTIONS.map(opt => (
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { value: 'hot',  label: 'Quente', emoji: '🔥', active: 'bg-red-500 text-white shadow-lg' },
+                { value: 'warm', label: 'Morno',  emoji: '♨️', active: 'bg-amber-500 text-white shadow-lg' },
+                { value: 'cold', label: 'Frio',   emoji: '❄️', active: 'bg-blue-500 text-white shadow-lg' },
+              ].map(opt => (
                 <button
                   key={opt.value}
                   type="button"
                   onClick={() => setField('temperature', opt.value)}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-2xl transition-all border-2 ${
+                  className={`py-3 rounded-xl text-sm font-bold transition-all active:scale-95 ${
                     form.temperature === opt.value
-                      ? `${opt.bg} ${opt.border} ${opt.text} scale-[1.03] shadow-sm`
-                      : 'bg-surface-container-low border-transparent text-on-secondary-container'
+                      ? opt.active
+                      : 'bg-surface-container-low text-on-surface-variant border border-outline-variant'
                   }`}
                 >
-                  <span className={`material-symbols-outlined ${form.temperature === opt.value ? 'icon-filled' : ''}`}>
-                    {opt.icon}
-                  </span>
-                  <span className="text-xs font-bold">{opt.label}</span>
+                  {opt.emoji} {opt.label}
                 </button>
               ))}
             </div>

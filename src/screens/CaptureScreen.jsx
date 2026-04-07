@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Capacitor } from '@capacitor/core'
 import { pb } from '../lib/pocketbase'
@@ -7,6 +7,7 @@ import { syncPendingLeads } from '../lib/sync'
 import { useApp } from '../context/AppContext'
 import { OfflineBanner } from '../components/OfflineBanner'
 import { BottomNav } from '../components/BottomNav'
+import { scanBadge } from '../lib/ocr'
 
 
 export default function CaptureScreen() {
@@ -37,9 +38,34 @@ export default function CaptureScreen() {
   const [formError, setFormError] = useState('')
   const [saving, setSaving]       = useState(false)
   const [saved, setSaved]         = useState(false)
+  const [scanning, setScanning]   = useState(false)
+  const [scanStep, setScanStep]   = useState('')
+  const cameraRef                 = useRef()
 
   function setField(field, value) {
     setForm(f => ({ ...f, [field]: value }))
+  }
+
+  async function handleScanBadge(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+    setScanning(true)
+    setScanStep('qr')
+    try {
+      const data = await scanBadge(file, (step) => setScanStep(step))
+      setForm(f => ({
+        ...f,
+        name:  data.name  || f.name,
+        email: data.email || f.email,
+        phone: data.phone ? maskPhone(data.phone) : f.phone,
+      }))
+    } catch (err) {
+      console.error('[OCR]', err)
+    } finally {
+      setScanning(false)
+      setScanStep('')
+    }
   }
 
 
@@ -161,6 +187,34 @@ export default function CaptureScreen() {
               Preencha as informações coletadas durante a abordagem.
             </p>
           </div>
+
+          {/* Botão OCR Crachá */}
+          <input
+            ref={cameraRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={handleScanBadge}
+          />
+          <button
+            type="button"
+            onClick={() => cameraRef.current?.click()}
+            disabled={scanning}
+            className="w-full py-4 rounded-2xl font-headline font-bold text-base flex items-center justify-center gap-2 active:scale-[0.98] transition-all border-2 border-dashed border-primary/40 text-primary bg-primary/5 hover:bg-primary/10 disabled:opacity-60"
+          >
+            {scanning ? (
+              <>
+                <span className="material-symbols-outlined animate-spin text-[20px]">sync</span>
+                {scanStep === 'qr' ? 'Lendo QR code...' : 'Analisando texto...'}
+              </>
+            ) : (
+              <>
+                <span className="material-symbols-outlined text-[20px]">photo_camera</span>
+                Fotografar Crachá
+              </>
+            )}
+          </button>
 
           <Field label="Nome completo" icon="person" required>
             <input

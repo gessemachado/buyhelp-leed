@@ -56,9 +56,11 @@ export default function CaptureScreen() {
       const data = await scanBadge(file, (step) => setScanStep(step))
       setForm(f => ({
         ...f,
-        name:  data.name  || f.name,
-        email: data.email || f.email,
-        phone: data.phone ? maskPhone(data.phone) : f.phone,
+        name:    data.name    || f.name,
+        email:   data.email   || f.email,
+        phone:   data.phone   ? maskPhone(data.phone) : f.phone,
+        company: data.company || f.company,
+        role:    data.role    || f.role,
       }))
     } catch (err) {
       console.error('[OCR]', err)

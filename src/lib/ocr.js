@@ -79,20 +79,72 @@ function extractPhone(text) {
   return match[0].replace(/\D/g, '').slice(-11)
 }
 
+// Palavras que nunca são nomes de pessoa
+const NON_NAME_WORDS = [
+  'CONGRESSISTA', 'PARTICIPANT', 'PARTICIPANTE', 'EXPOSITOR', 'PALESTRANTE',
+  'VISITANTE', 'STAFF', 'SUMMIT', 'EVENTO', 'FAIR', 'EXPO', 'AUTOCOM',
+  'ITAU', 'ITAÚ', 'BADGE', 'CRACHA', 'CRACHÁ',
+]
+
+function toTitleCase(str) {
+  return str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase())
+}
+
+function isLikelyName(line) {
+  const trimmed = line.trim()
+  if (trimmed.length < 5 || trimmed.length > 50) return false
+  if (/\d/.test(trimmed)) return false
+  // Verifica se é palavra proibida
+  const upper = trimmed.toUpperCase()
+  if (NON_NAME_WORDS.some(w => upper.includes(w))) return false
+  // Aceita "FLAVIO SILVA" (all caps, 2+ palavras) ou "Flavio Silva" (title case)
+  const words = trimmed.split(/\s+/).filter(Boolean)
+  if (words.length < 2) return false
+  const isAllCaps = words.every(w => w === w.toUpperCase() && /^[A-ZÀ-Ú]+$/.test(w))
+  const isTitleCase = words.every(w => /^[A-ZÀ-Ú][a-zà-ú]+$/.test(w))
+  return isAllCaps || isTitleCase
+}
+
 function extractName(text) {
-  // Remove email e telefone do texto para não confundir
   const clean = text
     .replace(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/gi, '')
     .replace(/(?:\+55\s?)?(?:\(?\d{2}\)?[\s\-]?)?\d{4,5}[\s\-]?\d{4}/g, '')
 
-  const lines = clean
-    .split('\n')
-    .map(l => l.trim())
-    .filter(l => l.length > 3 && l.length < 60)
-    // Nome: 2+ palavras, maiúsculas, sem números
-    .filter(l => /^[A-ZÀ-Ú][a-zà-ú]+([\s][A-ZÀ-Ú][a-zà-ú]+)+/.test(l) && !/\d/.test(l))
+  const lines = clean.split('\n').map(l => l.trim()).filter(Boolean)
+  const nameLine = lines.find(isLikelyName)
+  if (!nameLine) return ''
+  // Normaliza para Title Case se estiver em CAIXA ALTA
+  const words = nameLine.split(/\s+/).filter(Boolean)
+  const isAllCaps = words.every(w => w === w.toUpperCase() && /^[A-ZÀ-Ú]+$/.test(w))
+  return isAllCaps ? toTitleCase(nameLine) : nameLine
+}
 
-  return lines[0] || ''
+function extractCompany(text) {
+  // Pega linha após o nome que pareça empresa (mixed case, sem números)
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 2 && !/\d/.test(l))
+  const nameIdx = lines.findIndex(isLikelyName)
+  if (nameIdx === -1 || nameIdx + 1 >= lines.length) return ''
+  const candidate = lines[nameIdx + 1]
+  // Não deve ser cargo (evita "Sócio / Proprietário" como empresa)
+  if (/\/|sócio|gerente|diretor|coordenador|analista/i.test(candidate)) return ''
+  return candidate
+}
+
+function extractRole(text) {
+  const rolePatterns = [
+    /sócio\s*\/?\s*proprietário/i,
+    /gerente\s+\w+/i,
+    /diretor\s+\w*/i,
+    /coordenador\s*\w*/i,
+    /analista\s+\w*/i,
+    /desenvolvedor/i,
+    /supervisor/i,
+  ]
+  for (const pattern of rolePatterns) {
+    const match = text.match(pattern)
+    if (match) return match[0].trim()
+  }
+  return ''
 }
 
 // --- API pública ---
@@ -111,8 +163,10 @@ export async function scanBadge(file, onProgress) {
   const text = await readTextFromImage(file)
 
   return {
-    name:  fromQR.name  || extractName(text),
-    email: fromQR.email || extractEmail(text),
-    phone: fromQR.phone || extractPhone(text),
+    name:    fromQR.name  || extractName(text),
+    email:   fromQR.email || extractEmail(text),
+    phone:   fromQR.phone || extractPhone(text),
+    company: extractCompany(text),
+    role:    extractRole(text),
   }
 }

@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Capacitor } from '@capacitor/core'
 import { pb } from '../lib/pocketbase'
@@ -7,9 +7,6 @@ import { syncPendingLeads } from '../lib/sync'
 import { useApp } from '../context/AppContext'
 import { OfflineBanner } from '../components/OfflineBanner'
 import { BottomNav } from '../components/BottomNav'
-import { scanBadge } from '../lib/ocr'
-
-
 export default function CaptureScreen() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -31,45 +28,16 @@ export default function CaptureScreen() {
     role:             '',
     website:          '',
     quantidade_lojas: '',
+    quantidade_pdvs:  '',
     software_house:   '',
-    temperature:      'warm',
     notes:            '',
   })
   const [formError, setFormError] = useState('')
   const [saving, setSaving]       = useState(false)
   const [saved, setSaved]         = useState(false)
-  const [scanning, setScanning]   = useState(false)
-  const [scanStep, setScanStep]   = useState('')
-  const cameraRef                 = useRef()
-
   function setField(field, value) {
     setForm(f => ({ ...f, [field]: value }))
   }
-
-  async function handleScanBadge(e) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    e.target.value = ''
-    setScanning(true)
-    setScanStep('qr')
-    try {
-      const data = await scanBadge(file, (step) => setScanStep(step))
-      setForm(f => ({
-        ...f,
-        name:    data.name    || f.name,
-        email:   data.email   || f.email,
-        phone:   data.phone   ? maskPhone(data.phone) : f.phone,
-        company: data.company || f.company,
-        role:    data.role    || f.role,
-      }))
-    } catch (err) {
-      console.error('[OCR]', err)
-    } finally {
-      setScanning(false)
-      setScanStep('')
-    }
-  }
-
 
   function maskPhone(value) {
     const digits = value.replace(/\D/g, '').slice(0, 11)
@@ -108,7 +76,7 @@ export default function CaptureScreen() {
       setSaved(true)
       setTimeout(() => {
         setSaved(false)
-        setForm({ name: '', email: '', phone: '', company: '', role: '', website: '', quantidade_lojas: '', software_house: '', temperature: 'warm', notes: '' })
+        setForm({ name: '', email: '', phone: '', company: '', role: '', website: '', quantidade_lojas: '', quantidade_pdvs: '', software_house: '', notes: '' })
       }, 1500)
     } catch (err) {
       console.error('[Save lead]', err)
@@ -190,33 +158,15 @@ export default function CaptureScreen() {
             </p>
           </div>
 
-          {/* Botão OCR Crachá */}
-          <input
-            ref={cameraRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            className="hidden"
-            onChange={handleScanBadge}
-          />
-          <button
-            type="button"
-            onClick={() => cameraRef.current?.click()}
-            disabled={scanning}
-            className="w-full py-4 rounded-2xl font-headline font-bold text-base flex items-center justify-center gap-2 active:scale-[0.98] transition-all border-2 border-dashed border-primary/40 text-primary bg-primary/5 hover:bg-primary/10 disabled:opacity-60"
-          >
-            {scanning ? (
-              <>
-                <span className="material-symbols-outlined animate-spin text-[20px]">sync</span>
-                {scanStep === 'qr' ? 'Lendo QR code...' : 'Analisando texto...'}
-              </>
-            ) : (
-              <>
-                <span className="material-symbols-outlined text-[20px]">photo_camera</span>
-                Fotografar Crachá
-              </>
-            )}
-          </button>
+          <Field label="Empresa" icon="corporate_fare">
+            <input
+              type="text"
+              value={form.company}
+              onChange={e => setField('company', e.target.value)}
+              placeholder="Nome da empresa"
+              className="input-field"
+            />
+          </Field>
 
           <Field label="Nome completo" icon="person" required>
             <input
@@ -238,27 +188,16 @@ export default function CaptureScreen() {
             />
           </Field>
 
-          <div className="grid grid-cols-1 gap-5">
-            <Field label="WhatsApp" icon="smartphone">
-              <input
-                type="tel"
-                value={form.phone}
-                onChange={e => setField('phone', maskPhone(e.target.value))}
-                placeholder="(00) 00000-0000"
-                maxLength={15}
-                className="input-field"
-              />
-            </Field>
-            <Field label="Empresa" icon="corporate_fare">
-              <input
-                type="text"
-                value={form.company}
-                onChange={e => setField('company', e.target.value)}
-                placeholder="Nome da empresa"
-                className="input-field"
-              />
-            </Field>
-          </div>
+          <Field label="WhatsApp" icon="smartphone">
+            <input
+              type="tel"
+              value={form.phone}
+              onChange={e => setField('phone', maskPhone(e.target.value))}
+              placeholder="(00) 00000-0000"
+              maxLength={15}
+              className="input-field"
+            />
+          </Field>
 
           <Field label="Cargo" icon="work">
             <input
@@ -286,6 +225,17 @@ export default function CaptureScreen() {
               min="0"
               value={form.quantidade_lojas}
               onChange={e => setField('quantidade_lojas', e.target.value)}
+              placeholder="0"
+              className="input-field"
+            />
+          </Field>
+
+          <Field label="Qtd. de PDVs" icon="point_of_sale">
+            <input
+              type="number"
+              min="0"
+              value={form.quantidade_pdvs}
+              onChange={e => setField('quantidade_pdvs', e.target.value)}
               placeholder="0"
               className="input-field"
             />

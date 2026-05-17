@@ -1,16 +1,25 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { syncPendingLeads } from '../lib/sync'
+import { updateLead } from '../lib/db'
+import { pb } from '../lib/pocketbase'
 import { useApp } from '../context/AppContext'
 import { BottomNav } from '../components/BottomNav'
 import { OfflineBanner } from '../components/OfflineBanner'
-import { useState } from 'react'
 
-const TEMP_COLORS = {
-  hot:  { bg: 'bg-red-50 dark:bg-red-950/30',    text: 'text-red-600 dark:text-red-400',    label: '🔥 Quente' },
-  warm: { bg: 'bg-amber-50 dark:bg-amber-950/30', text: 'text-amber-600 dark:text-amber-400', label: '♨️ Morno'  },
-  cold: { bg: 'bg-blue-50 dark:bg-blue-950/30',   text: 'text-blue-600 dark:text-blue-400',   label: '❄️ Frio'   },
+function safeEmail(email) {
+  if (!email) return ''
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) ? email : ''
 }
+
+function maskPhone(value) {
+  const digits = value.replace(/\D/g, '').slice(0, 11)
+  if (digits.length <= 10) {
+    return digits.replace(/^(\d{2})(\d)/, '($1) $2').replace(/(\d{4})(\d)/, '$1-$2')
+  }
+  return digits.replace(/^(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d)/, '$1-$2')
+}
+
 
 function formatDate(dateStr) {
   if (!dateStr) return ''
@@ -34,20 +43,87 @@ export default function LeadsScreen() {
     loadLeadsRemote,
   } = useApp()
 
-  const [filter, setFilter]       = useState('all')   // all | pending | synced
-  const [capturedBy, setCapturedBy] = useState('all') // all | <nome>
-  const [search, setSearch]       = useState('')
-  const [syncing, setSyncing]     = useState(false)
-  const [syncError, setSyncError] = useState('')
+  const [filter, setFilter]         = useState('all')
+  const [capturedBy, setCapturedBy] = useState('all')
+  const [search, setSearch]         = useState('')
+  const [syncing, setSyncing]       = useState(false)
+  const [syncError, setSyncError]   = useState('')
 
-  // Online: carrega do servidor. Offline: carrega local.
+  const [editingLead, setEditingLead] = useState(null)
+  const [editForm, setEditForm]       = useState({})
+  const [editSaving, setEditSaving]   = useState(false)
+  const [editError, setEditError]     = useState('')
+
+  function openEdit(lead) {
+    setEditForm({
+      company:          lead.company          || '',
+      name:             lead.name             || '',
+      email:            lead.email            || '',
+      phone:            lead.phone            || '',
+      role:             lead.role             || '',
+      website:          lead.website          || '',
+      quantidade_lojas: lead.quantidade_lojas || '',
+      quantidade_pdvs:  lead.quantidade_pdvs  || '',
+      software_house:   lead.software_house   || '',
+      notes:            lead.notes            || '',
+    })
+    setEditError('')
+    setEditingLead(lead)
+  }
+
+  function setEditField(field, value) {
+    setEditForm(f => ({ ...f, [field]: value }))
+  }
+
+  async function handleEditSave() {
+    if (!editForm.name.trim()) {
+      setEditError('Nome é obrigatório.')
+      return
+    }
+    setEditSaving(true)
+    setEditError('')
+    try {
+      if (leadsSource === 'remote' && isOnline) {
+        await pb.collection('leads').update(editingLead.id, {
+          name:             editForm.name,
+          email:            safeEmail(editForm.email),
+          phone:            editForm.phone            || '',
+          company:          editForm.company          || '',
+          role:             editForm.role             || '',
+          notes:            editForm.notes            || '',
+          website:          editForm.website          || '',
+          quantidade_lojas: editForm.quantidade_lojas || '',
+          quantidade_pdvs:  editForm.quantidade_pdvs  || '',
+          software_house:   editForm.software_house   || '',
+        })
+        await loadLeadsRemote()
+      } else if (leadsSource === 'local') {
+        await updateLead(editingLead.id, editForm)
+        if (isOnline) syncPendingLeads().catch(() => {})
+        await refreshPendingCount()
+        await loadLeadsLocal()
+      } else {
+        // offline mas leadsSource ainda é 'remote (transição) — não deixa salvar
+        setEditError('Sem conexão. Aguarde um instante e tente novamente.')
+        return
+      }
+      setEditingLead(null)
+    } catch (err) {
+      console.error('[Edit lead]', err)
+      setEditError('Erro ao salvar: ' + (err?.message || String(err)))
+    } finally {
+      setEditSaving(false)
+    }
+  }
+
+  // Reage a mudanças de conectividade: online → remoto, offline → local
   useEffect(() => {
     if (isOnline) {
       loadLeadsRemote()
     } else {
       loadLeadsLocal()
     }
-  }, [])
+  }, [isOnline])
 
   async function handleSync() {
     if (!isOnline || syncing) return
@@ -279,23 +355,10 @@ export default function LeadsScreen() {
         ) : (
           <div className="space-y-3 pb-4">
             {filtered.map(lead => {
-              const temp = TEMP_COLORS[lead.temperature] || TEMP_COLORS.warm
               return (
                 <div key={lead.id} className="bg-surface-container-lowest rounded-2xl p-4 shadow-soft">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span className={`text-xs ${temp.bg} ${temp.text} px-2 py-0.5 rounded-full font-bold`}>
-                          {temp.label}
-                        </span>
-                        {leadsSource === 'local' && (
-                          lead.synced ? (
-                            <span className="material-symbols-outlined icon-filled text-[16px]" style={{ color: '#006c49' }}>cloud_done</span>
-                          ) : (
-                            <span className="material-symbols-outlined text-[16px] text-on-surface-variant">cloud_off</span>
-                          )
-                        )}
-                      </div>
                       <h4 className="font-headline font-bold text-on-secondary-fixed truncate">
                         {lead.name}
                       </h4>
@@ -313,18 +376,40 @@ export default function LeadsScreen() {
                       {lead.website && (
                         <p className="text-primary text-xs truncate mt-0.5">{lead.website}</p>
                       )}
+                      {(lead.quantidade_lojas || lead.quantidade_pdvs) && (
+                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                          {lead.quantidade_lojas && (
+                            <span className="flex items-center gap-1 text-[11px] text-on-surface-variant">
+                              <span className="material-symbols-outlined text-[13px]">storefront</span>
+                              {lead.quantidade_lojas} loja{lead.quantidade_lojas !== '1' ? 's' : ''}
+                            </span>
+                          )}
+                          {lead.quantidade_pdvs && (
+                            <span className="flex items-center gap-1 text-[11px] text-on-surface-variant">
+                              <span className="material-symbols-outlined text-[13px]">point_of_sale</span>
+                              {lead.quantidade_pdvs} PDV{lead.quantidade_pdvs !== '1' ? 's' : ''}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    <div className="shrink-0 text-right">
+                    <div className="shrink-0 text-right flex flex-col items-end gap-1.5">
+                      <button
+                        onClick={() => openEdit(lead)}
+                        className="p-1.5 rounded-lg text-on-surface-variant hover:text-primary hover:bg-primary/10 active:scale-95 transition-all"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">edit</span>
+                      </button>
                       <p className="text-[11px] text-on-surface-variant">{formatDate(lead.created)}</p>
                       {lead.event_name && (
-                        <p className="text-[10px] text-on-surface-variant/60 mt-0.5 truncate max-w-[100px]">
+                        <p className="text-[10px] text-on-surface-variant/60 truncate max-w-[100px]">
                           {lead.event_name}
                         </p>
                       )}
                     </div>
                   </div>
 
-                  {/* Rodapé: capturado por + notas */}
+                  {/* Rodapé: capturado por + status envio */}
                   <div className="mt-2.5 pt-2.5 border-t border-surface-container-low flex items-center justify-between gap-2">
                     {lead.captured_by ? (
                       <div className="flex items-center gap-1.5">
@@ -336,6 +421,17 @@ export default function LeadsScreen() {
                         </span>
                       </div>
                     ) : <span />}
+                    {leadsSource === 'remote' || lead.synced === 1 ? (
+                      <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/10">
+                        <span className="material-symbols-outlined icon-filled text-[13px]" style={{ color: '#00af79' }}>cloud_done</span>
+                        <span className="text-[11px] font-bold" style={{ color: '#00af79' }}>Enviado</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10">
+                        <span className="material-symbols-outlined text-[13px] text-primary">cloud_upload</span>
+                        <span className="text-[11px] font-bold text-primary">Pendente</span>
+                      </div>
+                    )}
                   </div>
 
                   {lead.notes && (
@@ -361,6 +457,93 @@ export default function LeadsScreen() {
       )}
 
       <BottomNav />
+
+      {/* Modal de edição */}
+      {editingLead && (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setEditingLead(null)} />
+          <div className="relative w-full max-w-lg bg-surface rounded-t-3xl px-6 pt-5 pb-10 shadow-2xl max-h-[90dvh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="font-headline font-bold text-xl text-on-secondary-fixed">Editar Lead</h2>
+              <button onClick={() => setEditingLead(null)} className="p-1 rounded-full hover:bg-surface-container-low text-on-surface-variant">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <EField label="Empresa" icon="corporate_fare">
+                <input type="text" value={editForm.company} onChange={e => setEditField('company', e.target.value)} placeholder="Nome da empresa" className="edit-input" />
+              </EField>
+              <EField label="Nome completo" icon="person" required>
+                <input type="text" value={editForm.name} onChange={e => setEditField('name', e.target.value)} placeholder="Nome do visitante" className="edit-input" />
+              </EField>
+              <EField label="E-mail" icon="mail">
+                <input type="email" value={editForm.email} onChange={e => setEditField('email', e.target.value)} placeholder="email@exemplo.com" className="edit-input" />
+              </EField>
+              <EField label="WhatsApp" icon="smartphone">
+                <input type="tel" value={editForm.phone} onChange={e => setEditField('phone', maskPhone(e.target.value))} placeholder="(00) 00000-0000" maxLength={15} className="edit-input" />
+              </EField>
+              <EField label="Cargo" icon="work">
+                <input type="text" value={editForm.role} onChange={e => setEditField('role', e.target.value)} placeholder="Ex: Gerente Comercial" className="edit-input" />
+              </EField>
+              <EField label="Site / Rede Social" icon="language">
+                <input type="url" value={editForm.website} onChange={e => setEditField('website', e.target.value)} placeholder="https://seusite.com.br" className="edit-input" />
+              </EField>
+              <EField label="Qtd. de Lojas" icon="storefront">
+                <input type="number" min="0" value={editForm.quantidade_lojas} onChange={e => setEditField('quantidade_lojas', e.target.value)} placeholder="0" className="edit-input" />
+              </EField>
+              <EField label="Qtd. de PDVs" icon="point_of_sale">
+                <input type="number" min="0" value={editForm.quantidade_pdvs} onChange={e => setEditField('quantidade_pdvs', e.target.value)} placeholder="0" className="edit-input" />
+              </EField>
+              <EField label="Software House" icon="terminal">
+                <input type="text" value={editForm.software_house} onChange={e => setEditField('software_house', e.target.value)} placeholder="Ex: TOTVS" className="edit-input" />
+              </EField>
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-on-secondary-fixed uppercase tracking-widest ml-1">Observações</label>
+                <textarea
+                  value={editForm.notes}
+                  onChange={e => setEditField('notes', e.target.value)}
+                  placeholder="Detalhes da conversa..."
+                  rows={3}
+                  className="w-full p-4 bg-surface-container-low border-none rounded-xl focus:ring-1 focus:ring-primary/30 focus:bg-surface-container-lowest transition-all placeholder:text-on-surface-variant/40 font-body text-sm outline-none resize-none"
+                />
+              </div>
+
+              {editError && <p className="text-error text-sm font-medium px-1">{editError}</p>}
+
+              <button
+                onClick={handleEditSave}
+                disabled={editSaving}
+                className="w-full py-4 rounded-2xl text-white font-headline font-bold text-base flex items-center justify-center gap-2 active:scale-[0.98] transition-all disabled:opacity-70"
+                style={{ background: 'linear-gradient(135deg, #FF6B35, #FF8C42)', boxShadow: '0 8px 24px rgba(255,107,53,0.35)' }}
+              >
+                {editSaving
+                  ? <><span className="material-symbols-outlined animate-spin">sync</span>Salvando...</>
+                  : <><span className="material-symbols-outlined">send</span>Salvar Alterações</>
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function EField({ label, icon, required, children }) {
+  return (
+    <div className="space-y-1.5">
+      <label className="block text-xs font-bold text-on-secondary-fixed uppercase tracking-widest ml-1">
+        {label}{required && <span className="text-error ml-0.5">*</span>}
+      </label>
+      <div className="relative group">
+        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-secondary-container group-focus-within:text-primary transition-colors text-[20px]">
+          {icon}
+        </span>
+        <div className="[&>input]:w-full [&>input]:pl-12 [&>input]:pr-4 [&>input]:py-4 [&>input]:bg-surface-container-low [&>input]:border-none [&>input]:rounded-xl [&>input]:focus:ring-1 [&>input]:focus:ring-primary/30 [&>input]:focus:bg-surface-container-lowest [&>input]:transition-all [&>input]:placeholder:text-on-surface-variant/40 [&>input]:font-body [&>input]:text-sm [&>input]:outline-none">
+          {children}
+        </div>
+      </div>
     </div>
   )
 }

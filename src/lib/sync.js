@@ -42,6 +42,7 @@ export async function syncPendingLeads() {
           captured_by:      lead.captured_by      || '',
           website:          lead.website          || '',
           quantidade_lojas: lead.quantidade_lojas || '',
+          quantidade_pdvs:  lead.quantidade_pdvs  || '',
           software_house:   lead.software_house   || '',
           created:          lead.created          || new Date().toISOString(),
         })

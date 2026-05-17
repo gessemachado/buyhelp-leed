@@ -2,6 +2,31 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { pb } from '../lib/pocketbase'
 
+const OFFLINE_CREDS_KEY = 'buyhelp_offline_creds'
+const SALT = 'buyhelp-leed-2026'
+
+async function hashPassword(password) {
+  const data = new TextEncoder().encode(password + SALT)
+  const buf  = await crypto.subtle.digest('SHA-256', data)
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
+async function saveOfflineCreds(email, password) {
+  const hash = await hashPassword(password)
+  localStorage.setItem(OFFLINE_CREDS_KEY, JSON.stringify({ email, hash }))
+}
+
+async function checkOfflineCreds(email, password) {
+  try {
+    const raw = localStorage.getItem(OFFLINE_CREDS_KEY)
+    if (!raw) return false
+    const { email: cachedEmail, hash: cachedHash } = JSON.parse(raw)
+    if (cachedEmail !== email) return false
+    const hash = await hashPassword(password)
+    return hash === cachedHash
+  } catch { return false }
+}
+
 export default function LoginScreen() {
   const navigate = useNavigate()
   const [email, setEmail]       = useState('')
@@ -20,11 +45,31 @@ export default function LoginScreen() {
     setError('')
     try {
       await pb.collection('users').authWithPassword(email, password)
+      await saveOfflineCreds(email, password)
+      localStorage.removeItem('buyhelp_logged_out')
       navigate('/home', { replace: true })
     } catch (err) {
       const msg = err?.message || err?.toString() || ''
-      if (msg.includes('fetch') || msg.includes('network') || msg.includes('Failed')) {
-        setError(`Sem conexão com o servidor. (${import.meta.env.VITE_PB_URL})`)
+      const isNetworkError =
+        msg.includes('fetch') || msg.includes('network') ||
+        msg.includes('Load failed') || msg.includes('NetworkError') ||
+        !navigator.onLine
+
+      if (isNetworkError) {
+        const credsOk    = await checkOfflineCreds(email, password)
+        const tokenValid = pb.authStore.isValid
+        if (credsOk && tokenValid) {
+          localStorage.removeItem('buyhelp_logged_out')
+          navigate('/home', { replace: true })
+          return
+        }
+        if (credsOk && !tokenValid) {
+          setError('Sessão expirada. Conecte-se à internet para entrar novamente.')
+        } else {
+          setError('Sem conexão. Verifique o e-mail e a senha.')
+        }
+      } else if (msg.includes('authenticate') || msg.includes('credentials') || msg.includes('identity') || msg.includes('password')) {
+        setError('E-mail ou senha incorretos.')
       } else {
         setError(`Erro: ${msg}`)
       }

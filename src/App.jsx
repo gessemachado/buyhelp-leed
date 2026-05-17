@@ -13,7 +13,8 @@ import AdminEventsScreen     from './screens/admin/AdminEventsScreen'
 import AdminEventLeadsScreen from './screens/admin/AdminEventLeadsScreen'
 
 function ProtectedRoute({ children }) {
-  if (!pb.authStore.isValid) return <Navigate to="/login" replace />
+  const loggedOut = localStorage.getItem('buyhelp_logged_out') === 'true'
+  if (!pb.authStore.isValid || loggedOut) return <Navigate to="/login" replace />
   return children
 }
 

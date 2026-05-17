@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
-import { initDB, getPendingCount, getAllLeads } from '../lib/db'
+import { initDB, getPendingCount, getAllLeads, markAllPending } from '../lib/db'
 import { syncPendingLeads } from '../lib/sync'
 import { useNetworkStatus } from '../hooks/useNetworkStatus'
 import { pb } from '../lib/pocketbase'
@@ -93,6 +93,22 @@ export function AppProvider({ children }) {
     setActiveEvent(getActiveEventFromCache())
   }, [])
 
+  const manualSync = useCallback(async ({ forceAll = false } = {}) => {
+    if (forceAll) await markAllPending()
+    setSyncStatus('syncing')
+    try {
+      const { synced, failed } = await syncPendingLeads()
+      setSyncStatus(failed > 0 ? 'error' : 'synced')
+      await refreshPendingCount()
+      setTimeout(() => setSyncStatus('idle'), 4000)
+      return { synced, failed }
+    } catch {
+      setSyncStatus('error')
+      setTimeout(() => setSyncStatus('idle'), 4000)
+      return { synced: 0, failed: -1 }
+    }
+  }, [refreshPendingCount])
+
   const loadLeadsLocal = useCallback(async () => {
     setLeadsLoading(true)
     try {
@@ -151,6 +167,7 @@ export function AppProvider({ children }) {
       refreshActiveEvent,
       loadLeadsLocal,
       loadLeadsRemote,
+      manualSync,
     }}>
       {children}
     </AppContext.Provider>

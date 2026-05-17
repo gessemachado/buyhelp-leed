@@ -82,6 +82,7 @@ export const kanbanApi = {
 
 // Leads
 export const leadsApi = {
+  create: (data) => req('POST', '/api/collections/leads/records', data),
   list: (eventName, page = 1, perPage = 50, temp = '') => {
     let filter = eventName ? `event_name='${eventName}'` : ''
     if (temp && temp !== 'all') filter = filter ? `${filter}&&temperature='${temp}'` : `temperature='${temp}'`

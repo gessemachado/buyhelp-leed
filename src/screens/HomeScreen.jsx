@@ -107,6 +107,7 @@ export default function HomeScreen() {
   }
 
   function goCapture(event) {
+    if (eventStatus(event) !== 'active') return
     navigate('/capture', { state: { eventName: event.name, eventId: event.id } })
   }
 
@@ -244,14 +245,21 @@ export default function HomeScreen() {
                   )}
                 </div>
 
-                <button
-                  onClick={() => goCapture(activeEvent)}
-                  className="w-full py-4 rounded-xl flex items-center justify-center gap-2 text-white font-headline font-bold shadow-cta active:scale-[0.98] transition-all"
-                  style={{ background: 'linear-gradient(135deg, #FF6B35, #FF8C42)' }}
-                >
-                  Capturar Leads
-                  <span className="material-symbols-outlined text-xl">arrow_forward</span>
-                </button>
+                {eventStatus(activeEvent) === 'active' ? (
+                  <button
+                    onClick={() => goCapture(activeEvent)}
+                    className="w-full py-4 rounded-xl flex items-center justify-center gap-2 text-white font-headline font-bold shadow-cta active:scale-[0.98] transition-all"
+                    style={{ background: 'linear-gradient(135deg, #FF6B35, #FF8C42)' }}
+                  >
+                    Capturar Leads
+                    <span className="material-symbols-outlined text-xl">arrow_forward</span>
+                  </button>
+                ) : (
+                  <div className="w-full py-4 rounded-xl flex items-center justify-center gap-2 bg-surface-container-high text-on-surface-variant font-headline font-bold">
+                    <span className="material-symbols-outlined text-xl">lock</span>
+                    {eventStatus(activeEvent) === 'soon' ? 'Evento ainda não iniciou' : 'Evento encerrado'}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -270,7 +278,8 @@ export default function HomeScreen() {
                   <button
                     key={event.id}
                     onClick={() => goCapture(event)}
-                    className={`flex items-center p-4 bg-surface-container-lowest rounded-2xl gap-4 shadow-soft w-full text-left active:scale-[0.98] transition-all ${status === 'closed' ? 'opacity-50' : ''}`}
+                    disabled={status !== 'active'}
+                    className={`flex items-center p-4 bg-surface-container-lowest rounded-2xl gap-4 shadow-soft w-full text-left transition-all ${status === 'active' ? 'active:scale-[0.98]' : 'opacity-50 cursor-not-allowed'}`}
                   >
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${status === 'soon' ? 'bg-surface-container-low' : 'bg-surface-container-high'}`}>
                       <span className={`material-symbols-outlined ${status === 'soon' ? 'text-primary' : 'text-on-surface-variant'}`}>

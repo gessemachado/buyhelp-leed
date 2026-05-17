@@ -26,6 +26,7 @@ async function initNative() {
       badge_back       TEXT,
       captured_by      TEXT,
       quantidade_lojas TEXT,
+      quantidade_pdvs  TEXT,
       software_house   TEXT,
       created          TEXT DEFAULT (datetime('now')),
       synced           INTEGER DEFAULT 0
@@ -36,6 +37,7 @@ async function initNative() {
   try { await sqliteDB.execute(`ALTER TABLE leads ADD COLUMN captured_by TEXT DEFAULT ''`) } catch {}
   try { await sqliteDB.execute(`ALTER TABLE leads ADD COLUMN website           TEXT DEFAULT ''`) } catch {}
   try { await sqliteDB.execute(`ALTER TABLE leads ADD COLUMN quantidade_lojas  TEXT DEFAULT ''`) } catch {}
+  try { await sqliteDB.execute(`ALTER TABLE leads ADD COLUMN quantidade_pdvs   TEXT DEFAULT ''`) } catch {}
   try { await sqliteDB.execute(`ALTER TABLE leads ADD COLUMN software_house    TEXT DEFAULT ''`) } catch {}
 }
 
@@ -60,8 +62,8 @@ export async function initDB() {
 export async function saveLead(data) {
   if (useNative()) {
     const result = await sqliteDB.run(
-      `INSERT INTO leads (name, email, phone, company, role, temperature, notes, device_id, event_name, badge_front, badge_back, captured_by, website, quantidade_lojas, software_house)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO leads (name, email, phone, company, role, temperature, notes, device_id, event_name, badge_front, badge_back, captured_by, website, quantidade_lojas, quantidade_pdvs, software_house)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         data.name,
         data.email            || '',
@@ -77,6 +79,7 @@ export async function saveLead(data) {
         data.capturedBy       || '',
         data.website          || '',
         data.quantidade_lojas || '',
+        data.quantidade_pdvs  || '',
         data.software_house   || '',
       ]
     )
@@ -101,6 +104,7 @@ export async function saveLead(data) {
     captured_by:      data.capturedBy       || '',
     website:          data.website          || '',
     quantidade_lojas: data.quantidade_lojas || '',
+    quantidade_pdvs:  data.quantidade_pdvs  || '',
     software_house:   data.software_house   || '',
     created:          new Date().toISOString(),
     synced:       0,
@@ -148,6 +152,40 @@ export async function getLeadsCount() {
     return result.values?.[0]?.count ?? 0
   }
   return webGetAll().length
+}
+
+export async function updateLead(id, data) {
+  if (useNative()) {
+    await sqliteDB.run(
+      `UPDATE leads SET name=?, email=?, phone=?, company=?, role=?, notes=?, website=?, quantidade_lojas=?, quantidade_pdvs=?, software_house=?, synced=0 WHERE id=?`,
+      [data.name, data.email||'', data.phone||'', data.company||'', data.role||'', data.notes||'', data.website||'', data.quantidade_lojas||'', data.quantidade_pdvs||'', data.software_house||'', id]
+    )
+    return
+  }
+  const leads = webGetAll().map(l => l.id === id ? {
+    ...l,
+    name:             data.name,
+    email:            data.email            || '',
+    phone:            data.phone            || '',
+    company:          data.company          || '',
+    role:             data.role             || '',
+    notes:            data.notes            || '',
+    website:          data.website          || '',
+    quantidade_lojas: data.quantidade_lojas || '',
+    quantidade_pdvs:  data.quantidade_pdvs  || '',
+    software_house:   data.software_house   || '',
+    synced: 0,
+  } : l)
+  webSave(leads)
+}
+
+export async function markAllPending() {
+  if (useNative()) {
+    await sqliteDB.run(`UPDATE leads SET synced = 0`)
+    return
+  }
+  const leads = webGetAll().map(l => ({ ...l, synced: 0 }))
+  webSave(leads)
 }
 
 export async function resetDB() {

@@ -7,6 +7,7 @@ import HomeScreen            from './screens/HomeScreen'
 import CaptureScreen         from './screens/CaptureScreen'
 import LeadsScreen           from './screens/LeadsScreen'
 import SettingsScreen        from './screens/SettingsScreen'
+import CalculadoraScreen     from './screens/CalculadoraScreen'
 import KanbanScreen          from './screens/KanbanScreen'
 import AdminLoginScreen      from './screens/admin/AdminLoginScreen'
 import AdminEventsScreen     from './screens/admin/AdminEventsScreen'
@@ -53,8 +54,9 @@ function AppRoutes() {
       <Route path="/home"    element={<ProtectedRoute><HomeScreen /></ProtectedRoute>} />
       <Route path="/capture" element={<ProtectedRoute><CaptureScreen /></ProtectedRoute>} />
       <Route path="/leads"    element={<ProtectedRoute><LeadsScreen /></ProtectedRoute>} />
-      <Route path="/settings" element={<ProtectedRoute><SettingsScreen /></ProtectedRoute>} />
-      <Route path="/admin/kanban" element={<AdminRoute><KanbanScreen /></AdminRoute>} />
+      <Route path="/settings"     element={<ProtectedRoute><SettingsScreen /></ProtectedRoute>} />
+      <Route path="/calculadora"   element={<ProtectedRoute><CalculadoraScreen /></ProtectedRoute>} />
+      <Route path="/admin/kanban"  element={<AdminRoute><KanbanScreen /></AdminRoute>} />
 
       {/* Admin web */}
       <Route path="/admin/login"          element={<AdminLoginScreen />} />

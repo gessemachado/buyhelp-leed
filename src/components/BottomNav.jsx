@@ -1,9 +1,10 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 
 const tabs = [
-  { path: '/home',     icon: 'home',        label: 'Home' },
-  { path: '/leads',    icon: 'leaderboard', label: 'Leads' },
-  { path: '/settings', icon: 'settings',    label: 'Config.' },
+  { path: '/home',         icon: 'home',        label: 'Home' },
+  { path: '/leads',        icon: 'leaderboard', label: 'Leads' },
+  { path: '/calculadora',  icon: 'calculate',   label: 'Calculadora' },
+  { path: '/settings',     icon: 'settings',    label: 'Config.' },
 ]
 
 export function BottomNav() {
